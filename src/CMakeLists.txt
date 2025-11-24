@@ -63,11 +63,11 @@ endif()
 
 ameba_list_append(private_includes
     ${c_CMPT_AUDIO_DIR}/interfaces
-    ${c_CMPT_AUDIO_DIR}/base/cutils/include
-    ${c_CMPT_AUDIO_DIR}/base/log/include
-    ${c_CMPT_AUDIO_DIR}/base/osal/osal_c/include
-    ${c_CMPT_AUDIO_DIR}/foundation/include
-    ${c_CMPT_APP_DIR}/speechmind/src
+    ${c_CMPT_APP_DIR}/speechmind/libs
+    ${c_CMPT_APP_DIR}/speechmind/libs/base/cutils/include
+    ${c_CMPT_APP_DIR}/speechmind/libs/base/log/include
+    ${c_CMPT_APP_DIR}/speechmind/libs/base/osal/osal_c/include
+    ${c_CMPT_APP_DIR}/speechmind/libs/foundation/include
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${c_COMPONENT_DIR}/os/freertos/freertos_posix/FreeRTOS-Plus-POSIX/include
     ${c_COMPONENT_DIR}/os/freertos/freertos_posix/FreeRTOS-Plus-POSIX/include/portable/realtek
