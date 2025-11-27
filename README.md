@@ -73,7 +73,7 @@ in the file\
 4. Caculate the storage capacity of resource :\
 **0x087FFFFF+1-0x08623000 = 0x1DD000**
 5. use the follow cmd to build:\
-**./mklittlefs -b 4096 -p 256 -s 0x1DD000 -c test test.bin**
+**./mklittlefs -b 4096 -p 256 -s 0x1DD000 -c tts tts.bin**
 
 ### Build and Download:
    * Refer to the SDK Examples section of the online documentation to generate images.
@@ -114,8 +114,6 @@ CONFIG APPLICATION  --->
     IPC Message Queue Config  --->
         [*] Enable IPC Message Queue
         [*]     Enable RPC
-    AI Config  --->
-        [*] Enable TFLITE MICRO
 ```
 
 ### Build the resource bin
@@ -136,7 +134,7 @@ in the file\
 4. Caculate the storage capacity of resource :\
 **0x085BCFFF+1-0x083E0000 = 0x1DD000**
 5. use the follow cmd to build:\
-**./mklittlefs -b 4096 -p 256 -s 0x1DD000 -c test test.bin**
+**./mklittlefs -b 4096 -p 256 -s 0x1DD000 -c tts tts.bin**
 
 ### Build and Download:
    * Refer to the SDK Examples section of the online documentation to generate images.
