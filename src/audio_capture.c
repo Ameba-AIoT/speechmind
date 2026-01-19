@@ -15,7 +15,7 @@
 #define FRAME_MS 16
 
 struct AudioCapture {
-    struct RTAudioRecord *audio_record;
+    struct AudioRecord *audio_record;
     uint32_t sample_rate;
     uint32_t channels;
     bool record_thread_running;
@@ -28,42 +28,42 @@ static void AudioCapture_startRecord(AudioCapture* audio_capture)
 {
     MEDIA_LOGV("%s Enter", __FUNCTION__);
     //*create audio_record*/
-    audio_capture->audio_record = RTAudioRecord_Create();
+    audio_capture->audio_record = AudioRecord_Create();
     if (!audio_capture->audio_record) {
         MEDIA_LOGE("record create failed");
         return;
     }
 
-    RTAudioRecordConfig record_config;
+    AudioRecordConfig record_config;
     record_config.sample_rate = audio_capture->sample_rate;
-    record_config.format = RTAUDIO_FORMAT_PCM_16_BIT;
+    record_config.format = AUDIO_FORMAT_PCM_16_BIT;
     record_config.channel_count = audio_capture->channels;
 
-    record_config.device = RTDEVICE_IN_MIC;
+    record_config.device = DEVICE_IN_MIC;
     record_config.buffer_bytes = 0;
-    RTAudioRecord_Init(audio_capture->audio_record, &record_config, RTAUDIO_INPUT_FLAG_NONE);
-    RTAudioRecord_Start(audio_capture->audio_record);
+    AudioRecord_Init(audio_capture->audio_record, &record_config, AUDIO_INPUT_FLAG_NONE);
+    AudioRecord_Start(audio_capture->audio_record);
 
-    /* Replace RTAUDIO_AMICS with your board's actual MIC category defines. */
+    /* Replace AUDIO_AMICS with your board's actual MIC category defines. */
 #if defined (CONFIG_AMEBALITE)
-    RTAudioControl_SetChannelMicCategory(0, RTAUDIO_AMIC1);
-    RTAudioControl_SetChannelMicCategory(1, RTAUDIO_AMIC2);
-    RTAudioControl_SetChannelMicCategory(2, RTAUDIO_AMIC3);
+    AudioControl_SetChannelMicCategory(0, AUDIO_AMIC1);
+    AudioControl_SetChannelMicCategory(1, AUDIO_AMIC2);
+    AudioControl_SetChannelMicCategory(2, AUDIO_AMIC3);
 
-    RTAudioControl_SetMicBstGain(RTAUDIO_AMIC1, RTAUDIO_MICBST_GAIN_15DB);
-    RTAudioControl_SetMicBstGain(RTAUDIO_AMIC2, RTAUDIO_MICBST_GAIN_15DB);
+    AudioControl_SetMicBstGain(AUDIO_AMIC1, AUDIO_MICBST_GAIN_15DB);
+    AudioControl_SetMicBstGain(AUDIO_AMIC2, AUDIO_MICBST_GAIN_15DB);
 
 #elif defined(CONFIG_AMEBASMART)
-    RTAudioControl_SetChannelMicCategory(0, RTAUDIO_AMIC1);
-    RTAudioControl_SetMicBstGain(RTAUDIO_AMIC1, RTAUDIO_MICBST_GAIN_15DB);
-    RTAudioControl_SetChannelMicCategory(1, RTAUDIO_AMIC3); // EA
-    RTAudioControl_SetMicBstGain(RTAUDIO_AMIC3, RTAUDIO_MICBST_GAIN_15DB); // EA
-    // RTAudioControl_SetChannelMicCategory(1, RTAUDIO_AMIC4);  // EL
-    // RTAudioControl_SetMicBstGain(RTAUDIO_AMIC4, RTAUDIO_MICBST_GAIN_0DB); // EL
-    RTAudioControl_SetChannelMicCategory(2, RTAUDIO_AMIC5);
-    RTAudioControl_SetMicBstGain(RTAUDIO_AMIC5, RTAUDIO_MICBST_GAIN_5DB);
+    AudioControl_SetChannelMicCategory(0, AUDIO_AMIC1);
+    AudioControl_SetMicBstGain(AUDIO_AMIC1, AUDIO_MICBST_GAIN_15DB);
+    AudioControl_SetChannelMicCategory(1, AUDIO_AMIC3); // EA
+    AudioControl_SetMicBstGain(AUDIO_AMIC3, AUDIO_MICBST_GAIN_15DB); // EA
+    // AudioControl_SetChannelMicCategory(1, AUDIO_AMIC4);  // EL
+    // AudioControl_SetMicBstGain(AUDIO_AMIC4, AUDIO_MICBST_GAIN_0DB); // EL
+    AudioControl_SetChannelMicCategory(2, AUDIO_AMIC5);
+    AudioControl_SetMicBstGain(AUDIO_AMIC5, AUDIO_MICBST_GAIN_5DB);
 #endif
-    RTAudioRecord_SetParameters(audio_capture->audio_record, "cap_mode=no_afe_pure_data");
+    AudioRecord_SetParameters(audio_capture->audio_record, "cap_mode=no_afe_pure_data");
     MEDIA_LOGD("RecordStartTask.. END");
 }
 
@@ -75,7 +75,7 @@ static bool AudioCapture_recordLoop(void *param)
     int data_size = (audio_capture->sample_rate * audio_capture->channels * 2 * FRAME_MS ) / 1000L;
     uint8_t* record_data = osal_malloc(data_size);
     while (audio_capture->record_thread_running) {
-        RTAudioRecord_Read(audio_capture->audio_record, record_data, data_size, true);
+        AudioRecord_Read(audio_capture->audio_record, record_data, data_size, true);
         if (audio_capture->callback) {
             audio_capture->callback(record_data, data_size, NULL);
         }
@@ -83,8 +83,8 @@ static bool AudioCapture_recordLoop(void *param)
     }
 
     osal_free(record_data);
-    RTAudioRecord_Stop(audio_capture->audio_record);
-    RTAudioRecord_Destroy(audio_capture->audio_record);
+    AudioRecord_Stop(audio_capture->audio_record);
+    AudioRecord_Destroy(audio_capture->audio_record);
     audio_capture->audio_record = NULL;
     MEDIA_LOGD("%s Enter, exit", __FUNCTION__);
     return false;

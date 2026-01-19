@@ -196,11 +196,11 @@ int32_t SpeechMind_init(void)
 
     ALooperManager_init();
 
-    RTAudioService_Init();
+    AudioService_Init();
 
     // set volume
     float volume = SpeechConfig_getAmplifierVolume();
-    RTAudioControl_SetHardwareVolume(volume, volume);
+    AudioControl_SetHardwareVolume(volume, volume);
 
     return AUDIO_OK;
 }

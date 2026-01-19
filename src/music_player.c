@@ -17,8 +17,8 @@
 #include "foundation/alooper.h"
 #include "foundation/ahandler.h"
 
-#include "media/rtplayer.h"
-#include "media/rtplayer_common.h"
+#include "media/media_player.h"
+#include "media/media_player_common.h"
 
 #include "playlist.h"
 #include "music_player.h"
@@ -34,8 +34,8 @@ enum {
 };
 
 struct MusicPlayer {
-    RTPlayer* player;
-    struct RTPlayerCallback callback;
+    MediaPlayer* player;
+    struct MediaPlayerCallback callback;
     osal_mutex_t status_mutex;
     int32_t status;
     AHandler handler;
@@ -51,14 +51,14 @@ int32_t MusicPlayer_start(MusicPlayer* player, const char* url);
 static void MusicPlayer_setStatus(MusicPlayer* player, int32_t status) {
     osal_mutex_lock(&player->status_mutex);
     MEDIA_LOGD("old status %d, new status %d", player->status, status);
-    if ((player->status == RTPLAYER_STARTED) && (status == RTPLAYER_STOPPED || status == RTPLAYER_PLAYBACK_COMPLETE)) {
-        if (status == RTPLAYER_PLAYBACK_COMPLETE) {
+    if ((player->status == MEDIA_PLAYER_STARTED) && (status == MEDIA_PLAYER_STOPPED || status == MEDIA_PLAYER_PLAYBACK_COMPLETE)) {
+        if (status == MEDIA_PLAYER_PLAYBACK_COMPLETE) {
             Playlist_removeFirstSong(player->playlist);
-            RTPlayer_Stop(player->player);
+            MediaPlayer_Stop(player->player);
         }
-        if (status == RTPLAYER_STOPPED) {
-            RTPlayer_Reset(player->player);
-            player->status = RTPLAYER_IDLE;
+        if (status == MEDIA_PLAYER_STOPPED) {
+            MediaPlayer_Reset(player->player);
+            player->status = MEDIA_PLAYER_IDLE;
             char* url = Playlist_getFirstSongTitle(player->playlist);
             if(url) {
                 player->status = status;
@@ -108,20 +108,20 @@ void MusicPlayer_onStart(MusicPlayer* music_player, AMessage* msg) {
 
     music_player->url = strdup(url);
 
-    int32_t ret = RTPlayer_SetSource(music_player->player, url);
+    int32_t ret = MediaPlayer_SetSource(music_player->player, url);
     if (ret != 0) {
-        MEDIA_LOGE("RTPlayer_SetSource FAILED ret=%d", (int)ret);
+        MEDIA_LOGE("MediaPlayer_SetSource FAILED ret=%d", (int)ret);
     } else {
-        ret = RTPlayer_Prepare(music_player->player);
+        ret = MediaPlayer_Prepare(music_player->player);
         if (ret) {
-            MEDIA_LOGE("RTPlayer_Prepare FAILED ret=%d", (int)ret);
-            ret = RTPlayer_Reset(music_player->player);
+            MEDIA_LOGE("MediaPlayer_Prepare FAILED ret=%d", (int)ret);
+            ret = MediaPlayer_Reset(music_player->player);
         } else {
-            ret = RTPlayer_Start(music_player->player);
-            MEDIA_LOGD("RTPlayer_Start ret=%d", (int)ret);
+            ret = MediaPlayer_Start(music_player->player);
+            MEDIA_LOGD("MediaPlayer_Start ret=%d", (int)ret);
             if (ret) {
-                MEDIA_LOGE("RTPlayer_Start FAILED ret=%d", (int)ret);
-                ret = RTPlayer_Reset(music_player->player);
+                MEDIA_LOGE("MediaPlayer_Start FAILED ret=%d", (int)ret);
+                ret = MediaPlayer_Reset(music_player->player);
             }
         }
     }
@@ -141,8 +141,8 @@ int32_t MusicPlayer_stop(MusicPlayer* player, bool clear) {
 void MusicPlayer_onStop(MusicPlayer* music_player)
 {
     Playlist_removeFirstSong(music_player->playlist);
-    RTPlayer_Stop(music_player->player);
-    RTPlayer_Reset(music_player->player);
+    MediaPlayer_Stop(music_player->player);
+    MediaPlayer_Reset(music_player->player);
 }
 
 int32_t MusicPlayer_resume(MusicPlayer* music_player) {
@@ -154,7 +154,7 @@ int32_t MusicPlayer_resume(MusicPlayer* music_player) {
 }
 
 void MusicPlayer_onResume(MusicPlayer* music_player) {
-    if (RTPlayer_Start(music_player->player)) {
+    if (MediaPlayer_Start(music_player->player)) {
         MEDIA_LOGE("MusicPlayer not start, restart");
         char* url = Playlist_getFirstSongTitle(music_player->playlist);
         if(url) {
@@ -172,9 +172,9 @@ int32_t MusicPlayer_pause(MusicPlayer* music_player) {
 
 void MusicPlayer_onPause(MusicPlayer* music_player)
 {
-    int res = RTPlayer_Pause(music_player->player);
+    int res = MediaPlayer_Pause(music_player->player);
     if (res != OSAL_OK) {
-        MusicPlayer_setStatus(music_player, RTPLAYER_PAUSED);
+        MusicPlayer_setStatus(music_player, MEDIA_PLAYER_PAUSED);
     }
 }
 
@@ -211,12 +211,12 @@ MusicPlayer_onMessage(AHandler *me, AMessage *msg) {
     }
 }
 
-static inline MusicPlayer* GetMusicPlayer(const struct RTPlayerCallback *me) {
+static inline MusicPlayer* GetMusicPlayer(const struct MediaPlayerCallback *me) {
     return container_of(me, MusicPlayer, callback);
 }
 
-static void OnMusicPlayStateChanged(const struct RTPlayerCallback *listener,
-                                    const struct RTPlayer *player,
+static void OnMusicPlayStateChanged(const struct MediaPlayerCallback *listener,
+                                    const struct MediaPlayer *player,
                                     int state)
 {
     MEDIA_LOGD("OnMusicPlayStateChanged(%p %p), (%d)", listener, player, state);
@@ -228,7 +228,7 @@ static void OnMusicPlayStateChanged(const struct RTPlayerCallback *listener,
     AMessage_put(msg);
 }
 
-static void OnMusicPlayerInfo(const RTPlayerCallback *listener, const RTPlayer *player, int info, int extra)
+static void OnMusicPlayerInfo(const MediaPlayerCallback *listener, const MediaPlayer *player, int info, int extra)
 {
     (void) listener;
     (void) player;
@@ -236,7 +236,7 @@ static void OnMusicPlayerInfo(const RTPlayerCallback *listener, const RTPlayer *
     (void) extra;
 }
 
-static void OnMusicError(const struct RTPlayerCallback *listener, const struct RTPlayer *player, int error, int extra)
+static void OnMusicError(const struct MediaPlayerCallback *listener, const struct MediaPlayer *player, int error, int extra)
 {
     (void) listener;
     (void) player;
@@ -244,7 +244,7 @@ static void OnMusicError(const struct RTPlayerCallback *listener, const struct R
     (void) extra;
     MusicPlayer *music_player = GetMusicPlayer(listener);
     AMessage *msg = AMessage_create(kWhatError, &music_player->handler);
-    AMessage_setInt32(msg, "status", RTPLAYER_ERROR);
+    AMessage_setInt32(msg, "status", MEDIA_PLAYER_ERROR);
     AMessage_post(msg, 0);
     AMessage_put(msg);
 }
@@ -270,7 +270,7 @@ MusicPlayer* MusicPlayer_create(AMessage *notify) {
         return NULL;
     }
 
-    music_player->player = RTPlayer_Create();
+    music_player->player = MediaPlayer_Create();
     if (!music_player->player) {
         MEDIA_LOGE("malloc music_player->player fail");
         Playlist_destroy(music_player->playlist);
@@ -278,11 +278,11 @@ MusicPlayer* MusicPlayer_create(AMessage *notify) {
         return NULL;
     }
 
-    music_player->callback.OnRTPlayerStateChanged = OnMusicPlayStateChanged;
-    music_player->callback.OnRTPlayerInfo = OnMusicPlayerInfo;
-    music_player->callback.OnRTPlayerError = OnMusicError;
+    music_player->callback.OnMediaPlayerStateChanged = OnMusicPlayStateChanged;
+    music_player->callback.OnMediaPlayerInfo = OnMusicPlayerInfo;
+    music_player->callback.OnMediaPlayerError = OnMusicError;
 
-    RTPlayer_SetCallback(music_player->player, &music_player->callback);
+    MediaPlayer_SetCallback(music_player->player, &music_player->callback);
 
     music_player->looper = ALooper_create("plp");
     if (!music_player->looper) {
@@ -310,7 +310,7 @@ int32_t MusicPlayer_addSong(MusicPlayer* player, const char* url) {
 
     Playlist_addSong(player->playlist, url);
     int status = MusicPlayer_getStatus(player);
-    if (list_size == 0 && status != RTPLAYER_PAUSED) {
+    if (list_size == 0 && status != MEDIA_PLAYER_PAUSED) {
         MEDIA_LOGD("start %s list size %d", url, list_size);
         MusicPlayer_start(player, url);
     } else {
