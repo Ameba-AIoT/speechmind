@@ -296,6 +296,18 @@ void speech_mind_config_handler(uint16_t argc, uint8_t *argv[])
     }
 }
 
+
+/**
+ * @brief Function for speech mind configuration.
+ *
+ * @param argc The number of arguments.
+ * @param argv An array of arguments:
+ *             "\t speech_mind_config -k keywords_num keywords1 keywords2 -t threshold_num threshold1 threshold2\n"
+ *             - `-k`: Number of keywords followed by the keywords.
+ *             - `-t`: Number of thresholds followed by the threshold values.
+ *
+ * @return Always returns 1.
+ */
 u32 speech_mind_config_test(u16 argc, u8 *argv[])
 {
     MEDIA_LOGV("%s Enter\n", __FUNCTION__);
@@ -310,9 +322,5 @@ u32 speech_mind_config_test(u16 argc, u8 *argv[])
 
 CMD_TABLE_DATA_SECTION
 const COMMAND_TABLE speech_test_cmd_table[] = {
-    {
-        (const u8 *)"speech_mind_config",  1, speech_mind_config_test, (const u8 *)"\t speech_mind_config -k keywords_num keywords1 keywords2 -t threshold_num threshold1 threshold2\n"
-    },
+    {"speech_mind_config",  speech_mind_config_test},
 };
-
-
