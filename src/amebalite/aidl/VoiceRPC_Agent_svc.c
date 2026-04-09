@@ -53,7 +53,6 @@ VOICE_AGENT_0(RPC_STRUCT * rpc, int32_t opt, RPC_Mutex *pMutex, char * buf)
 
 
     if (!RPC_GetArgs (rpc, (xdrproc_t) _xdr_argument, (caddr_t) &argument, opt, buf)) {
-        printf("get args error\n");
         RPC_MutexUnlock(pMutex);
         return;
     }

@@ -26,11 +26,11 @@ struct AudioCapture {
 
 static void AudioCapture_startRecord(AudioCapture* audio_capture)
 {
-    MEDIA_LOGV("%s Enter", __FUNCTION__);
+    RTK_LOGS(LOG_TAG, RTK_LOG_DEBUG, "%s Enter\n", __FUNCTION__);
     //*create audio_record*/
     audio_capture->audio_record = AudioRecord_Create();
     if (!audio_capture->audio_record) {
-        MEDIA_LOGE("record create failed");
+        RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "record create failed\n");
         return;
     }
 
@@ -64,13 +64,13 @@ static void AudioCapture_startRecord(AudioCapture* audio_capture)
     AudioControl_SetMicBstGain(AUDIO_AMIC5, AUDIO_MICBST_GAIN_5DB);
 #endif
     AudioRecord_SetParameters(audio_capture->audio_record, "cap_mode=no_afe_pure_data");
-    MEDIA_LOGD("RecordStartTask.. END");
+    RTK_LOGS(LOG_TAG, RTK_LOG_INFO,"RecordStartTask.. END\n");
 }
 
 static bool AudioCapture_recordLoop(void *param)
 {
     AudioCapture *audio_capture = (AudioCapture *)param;
-    MEDIA_LOGD("%s Enter, record_thread_running=%d\n", __FUNCTION__, audio_capture->record_thread_running);
+    RTK_LOGS(LOG_TAG, RTK_LOG_INFO,"%s Enter, record_thread_running=%d\n", __FUNCTION__, audio_capture->record_thread_running);
 
     int data_size = (audio_capture->sample_rate * audio_capture->channels * 2 * FRAME_MS ) / 1000L;
     uint8_t* record_data = osal_malloc(data_size);
@@ -86,7 +86,7 @@ static bool AudioCapture_recordLoop(void *param)
     AudioRecord_Stop(audio_capture->audio_record);
     AudioRecord_Destroy(audio_capture->audio_record);
     audio_capture->audio_record = NULL;
-    MEDIA_LOGD("%s Enter, exit", __FUNCTION__);
+    RTK_LOGS(LOG_TAG, RTK_LOG_INFO,"%s Enter, exit\n", __FUNCTION__);
     return false;
 }
 
@@ -94,7 +94,7 @@ AudioCapture* AudioCapture_create(uint32_t sample_rate, uint32_t channels)
 {
     AudioCapture* capture = (AudioCapture*)osal_calloc(sizeof(AudioCapture));
     if (!capture) {
-        MEDIA_LOGE("create audio capture error");
+        RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "create audio capture error\n");
         return NULL;
     }
     capture->sample_rate = sample_rate;
@@ -121,7 +121,7 @@ int32_t AudioCapture_start(AudioCapture* audio_capture)
     param.name = (char *)"AudioCapture_recordLoop";
     int32_t res = osal_thread_create(&audio_capture->record_thread, AudioCapture_recordLoop, audio_capture, &param);
     if (res) {
-        MEDIA_LOGE("create record task fail");
+        RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "create record task fail\n");
         return AUDIO_ERR_NO_MEMORY;
     }
     return AUDIO_OK;

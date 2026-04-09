@@ -46,7 +46,7 @@ typedef struct Playlist {
 Playlist* Playlist_create(void) {
     Playlist* playlist = (Playlist*)osal_malloc(sizeof(Playlist));
     if (!playlist) {
-        MEDIA_LOGE("malloc playlist fail\n");
+        RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "malloc playlist fail\n");
         return NULL;
     }
     playlist->head = NULL;
@@ -63,7 +63,7 @@ void Playlist_addSong(Playlist* playlist, const char* title) {
     osal_mutex_lock(&playlist->mutex);
     Song* newSong = (Song*)osal_malloc(sizeof(Song));
     if (!newSong) {
-        MEDIA_LOGE("malloc new Song fail!");
+        RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "malloc new Song fail!\n");
         return;
     }
     newSong->title = strdup(title);
@@ -77,10 +77,10 @@ void Playlist_addSong(Playlist* playlist, const char* title) {
     }
     playlist->count++;
 
-    MEDIA_LOGD("song %s added to the playlist", title);
+    RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "song %s added to the playlist\n", title);
     // osal_cond_signal(&playlist->cond);
     osal_mutex_unlock(&playlist->mutex);
-    MEDIA_LOGE("Playlist_addSong finish");
+    RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "Playlist_addSong finish\n");
 }
 
 void Playlist_clear(Playlist* playlist) {
@@ -95,17 +95,17 @@ void Playlist_clear(Playlist* playlist) {
     playlist->head = playlist->tail = NULL;
     playlist->count = 0;
 
-    MEDIA_LOGD("play list is clear");
+    RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "play list is clear\n");
     osal_mutex_unlock(&playlist->mutex);
 }
 
 void Playlist_display(Playlist* playlist) {
     osal_mutex_lock(&playlist->mutex);
-    MEDIA_LOGD("Current PlayList:");
+    RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "Current PlayList:\n");
     Song* current = playlist->head;
     int index = 1;
     while (current != NULL) {
-        MEDIA_LOGD("%d. %s", index++, current->title);
+        RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "%d. %s\n", index++, current->title);
         current = current->next;
     }
     osal_mutex_unlock(&playlist->mutex);
@@ -154,7 +154,7 @@ void Playlist_destroy(Playlist* playlist) {
 
 static Song* Playlist_getFirstSong(Playlist* playlist) {
     if (!playlist) {
-        MEDIA_LOGE("Playlist is NULL");
+        RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "Playlist is NULL\n");
         return NULL;
     }
 
@@ -163,7 +163,7 @@ static Song* Playlist_getFirstSong(Playlist* playlist) {
     Song* firstSong = playlist->head;
 
     if (!firstSong) {
-        MEDIA_LOGD("Playlist is empty");
+        RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "Playlist is empty\n");
     }
 
     osal_mutex_unlock(&playlist->mutex);
@@ -190,14 +190,14 @@ char* Playlist_getFirstSongTitle(Playlist* playlist) {
 
 int Playlist_removeFirstSong(Playlist* playlist) {
     if (!playlist) {
-        MEDIA_LOGE("Playlist is NULL");
+        RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "Playlist is NULL\n");
         return OSAL_ERR_INVALID_PARAM;
     }
 
     osal_mutex_lock(&playlist->mutex);
 
     if (playlist->head == NULL) {
-        MEDIA_LOGD("Playlist is already empty");
+        RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "Playlist is already empty\n");
         osal_mutex_unlock(&playlist->mutex);
         return OSAL_ERR_INVALID_OPERATION;
     }
@@ -211,7 +211,7 @@ int Playlist_removeFirstSong(Playlist* playlist) {
         playlist->tail = NULL;
     }
 
-    MEDIA_LOGD("Removed song: %s", firstSong->title);
+    RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "Removed song: %s\n", firstSong->title);
 
     osal_free(firstSong);
 

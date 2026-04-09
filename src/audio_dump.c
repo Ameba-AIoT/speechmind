@@ -29,7 +29,7 @@ typedef struct AudioDump {
 
 static bool SDDumpTask(void *param)
 {
-    MEDIA_LOGD("SDDumpTask");
+    RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "SDDumpTask\n");
     AudioDump *handle = (AudioDump *)param;
 
     uint8_t *tmp_data = (uint8_t *)osal_malloc(DUMP_FRAME_BYTES * 32);
@@ -51,10 +51,10 @@ static bool SDDumpTask(void *param)
             memset(path, 128, 0);
             char *prefix = find_vfs_tag(VFS_REGION_1);
             snprintf(path, sizeof(path), "%s://dump_%lld.pcm", prefix, index);
-            MEDIA_LOGD("save path %s", path);
+            RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "save path %s\n", path);
             save_file = fopen(path, "w+");
             if (!save_file) {
-                MEDIA_LOGE("save %s fail\n", path);
+                RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "save %s fail\n", path);
                 break;
             }
             index++;
@@ -62,7 +62,7 @@ static bool SDDumpTask(void *param)
         size_t res = fwrite(tmp_data, DUMP_FRAME_BYTES* 32, 1, save_file);
         if (res < DUMP_FRAME_BYTES* 32) {
             fclose(save_file);
-            MEDIA_LOGE("write %s fail", path);
+            RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "write %s fail\n", path);
             break;
         }
         i++;
@@ -78,7 +78,7 @@ static bool SDDumpTask(void *param)
 
 static bool PcDumpTask(void *param)
 {
-    MEDIA_LOGD("PcDumpTask");
+    RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "PcDumpTask\n");
     AudioDump *handle = (AudioDump *)param;
 
     uint8_t *buffer0 = (uint8_t *)osal_malloc(RECORD_PAGE_SIZE);
@@ -115,13 +115,13 @@ static bool PcDumpTask(void *param)
 AudioDump* AudioDump_create(enum audio_dump_type type) {
     AudioDump* audio_dump = (AudioDump*)osal_malloc(sizeof(AudioDump));
     if (!audio_dump) {
-        MEDIA_LOGE("malloc audio_dump fail\n");
+        RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "malloc audio_dump fail\n");
         return NULL;
     }
 
     audio_dump->save_ring_buffer = ring_buffer_create(1 << 19, RINGBUFFER_LOCAL);
     if (!audio_dump->save_ring_buffer) {
-        MEDIA_LOGE("create afe local ring buffer fail");
+        RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "create afe local ring buffer fail\n");
         osal_free(audio_dump);
         return NULL;
     }
@@ -148,7 +148,7 @@ int32_t AudioDump_start(AudioDump* audio_dump) {
         res = osal_thread_create(&audio_dump->save_thread, PcDumpTask, audio_dump, &param);
     }
     if (res) {
-        MEDIA_LOGE("create dump task fail");
+        RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "create dump task fail\n");
         return AUDIO_ERR_NO_MEMORY;
     }
     return AUDIO_OK;
@@ -156,7 +156,7 @@ int32_t AudioDump_start(AudioDump* audio_dump) {
 
 int32_t AudioDump_dump(AudioDump* audio_dump, void* data, int32_t length) {
     if (!audio_dump) {
-        MEDIA_LOGE("manager is NULL");
+        RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "manager is NULL\n");
         return AUDIO_ERR_INVALID_PARAM;
     }
 
@@ -165,7 +165,7 @@ int32_t AudioDump_dump(AudioDump* audio_dump, void* data, int32_t length) {
         audio_dump->save_ring_buffer->write(audio_dump->save_ring_buffer, data, length);
         return AUDIO_OK;
     } else {
-        MEDIA_LOGE("space not would block");
+        RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "space not would block\n");
         return AUDIO_ERR_WOULD_BLOCK;
     }
 }

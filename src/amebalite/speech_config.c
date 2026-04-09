@@ -27,13 +27,13 @@ static void SpeechConfig_setDefaultParam(void)
     key_words_length[0] = strlen("ni-hao-xiao-qiang") + 1;
     key_words_length[1] = strlen("xiao-qiang-xiao-qiang") + 1;
     int total_length = key_words_length[0] + key_words_length[1];
-    MEDIA_LOGD("total_length %d", total_length);
+    RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "total_length %d\n", total_length);
 
     g_config.kws_config.key_words_length = (int *)osal_malloc(total_length * sizeof(int));
     g_config.kws_config.key_words_total = (char *)osal_malloc(total_length * sizeof(char));
     memcpy(g_config.kws_config.key_words_total, "ni-hao-xiao-qiang", key_words_length[0]);
     memcpy(g_config.kws_config.key_words_total + key_words_length[0], "xiao-qiang-xiao-qiang", key_words_length[1]);
-    MEDIA_LOGD("%s %s %s", __FUNCTION__, g_config.kws_config.key_words_total, g_config.kws_config.key_words_total + key_words_length[0]);
+    RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "%s %s %s\n", __FUNCTION__, g_config.kws_config.key_words_total, g_config.kws_config.key_words_total + key_words_length[0]);
 
     g_config.kws_config.key_words_length[0] = key_words_length[0];
     g_config.kws_config.key_words_length[1] = key_words_length[1];
@@ -52,14 +52,14 @@ void SpeechConfig_save(void)
         char tmp[PARAM_FILE_SIZE_MAX];
         size_t res = fread(tmp, PARAM_FILE_SIZE_MAX, 1, param_file);
         if (res < PARAM_FILE_SIZE_MAX) {
-            MEDIA_LOGE("read error");
+            RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "read error\n");
             fclose(param_file);
             return;
         }
 
         root = cJSON_Parse(tmp);
         if (!root) {
-            MEDIA_LOGE("parse error");
+            RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "parse error\n");
             fclose(param_file);
             return;
         }
@@ -74,7 +74,7 @@ void SpeechConfig_save(void)
         }
         fclose(param_file);
     } else {
-        MEDIA_LOGE("%s is not exit, create new one.", PARAM_FILE);
+        RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "%s is not exit, create new one.\n", PARAM_FILE);
         root = cJSON_CreateObject();
     }
 
@@ -105,18 +105,18 @@ void SpeechConfig_save(void)
     char *updated_json = cJSON_Print(root);
     updated_json[strlen(updated_json) + 1] = '\0';
 
-    MEDIA_LOGD("new json %s", updated_json);
+    RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "new json %s\n", updated_json);
 
     cJSON_Delete(root);
 
     param_file = fopen(PARAM_FILE, "w");
     if (!param_file) {
-        MEDIA_LOGE("%s is not exist.", PARAM_FILE);
+        RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "%s is not exist.\n", PARAM_FILE);
         return;
     }
     size_t res = fwrite(updated_json, strlen(updated_json) + 1, 1, param_file);
     if (res < strlen(updated_json) + 1) {
-        MEDIA_LOGE("write fail");
+        RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "write fail\n");
     }
     fclose(param_file);
     osal_free(updated_json);
@@ -130,7 +130,7 @@ void SpeechConfig_load(void)
 
     FILE *param_file = fopen(PARAM_FILE, "r+");
     if (!param_file) {
-        MEDIA_LOGE("%s is not exist. creat a new one", PARAM_FILE);
+        RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "%s is not exist. creat a new one\n", PARAM_FILE);
         SpeechConfig_setDefaultParam();
         SpeechConfig_save();
         return;
@@ -144,30 +144,30 @@ void SpeechConfig_load(void)
 
     cJSON *root = cJSON_Parse(tmp);
     if (!root) {
-        MEDIA_LOGE("parse error");
+        RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "parse error\n");
         fclose(param_file);
         return;
     }
 
     cJSON *amplifier_volume = cJSON_GetObjectItem(root, "amplifier_volume");
     if (!amplifier_volume) {
-        MEDIA_LOGE("parse volume fail.");
+        RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "parse volume fail.\n");
         g_config.amplifier_volume = 0.8f;
     } else {
         g_config.amplifier_volume = (float)amplifier_volume->valuedouble;
-        MEDIA_LOGD("amplifier_volume is %d.", (int)(g_config.amplifier_volume * 10));
+        RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "amplifier_volume is %d.\n", (int)(g_config.amplifier_volume * 10));
     }
 
     cJSON *key_words_obj = cJSON_GetObjectItem(root, "key_words");
     if (!key_words_obj) {
-        MEDIA_LOGE("parse key_words fail");
+        RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "parse key_words fail\n");
         fclose(param_file);
         return;
     } else {
-        MEDIA_LOGD("parse key_words success");
+        RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "parse key_words success\n");
         int key_words_nums = cJSON_GetArraySize(key_words_obj);
         g_config.kws_config.key_words_num = key_words_nums;
-        MEDIA_LOGD("parse key_words_nums %d", key_words_nums);
+        RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "parse key_words_nums %d\n", key_words_nums);
         int total_key_words_length = 0;
         g_config.kws_config.key_words_length = (int *)osal_malloc(g_config.kws_config.key_words_num * sizeof(int));
 
@@ -186,31 +186,31 @@ void SpeechConfig_load(void)
             if (cJSON_IsString(key_word_obj) && (key_word_obj->valuestring != NULL)) {
                 memcpy(temp_key_words, key_word_obj->valuestring, g_config.kws_config.key_words_length[i]);
                 temp_key_words += g_config.kws_config.key_words_length[i];
-                MEDIA_LOGD("g_config.kws_config.key_words_length[%d] %d", i, g_config.kws_config.key_words_length[i]);
+                RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "g_config.kws_config.key_words_length[%d] %d\n", i, g_config.kws_config.key_words_length[i]);
             }
         }
     }
 
     cJSON *thresholds_obj = cJSON_GetObjectItem(root, "thresholds");
     if (!thresholds_obj) {
-        MEDIA_LOGE("parse thresholds fail");
+        RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "parse thresholds fail\n");
         fclose(param_file);
         return;
     } else {
-        MEDIA_LOGD("parse thresholds success");
+        RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "parse thresholds success\n");
         int thresholds_num = cJSON_GetArraySize(thresholds_obj);
         g_config.kws_config.thresholds_num = thresholds_num;
         g_config.kws_config.thresholds = (float *)osal_malloc(g_config.kws_config.thresholds_num * sizeof(float));
         for (int i = 0; i < thresholds_num; i++) {
             cJSON *threshold_obj = cJSON_GetArrayItem(thresholds_obj, i);
             g_config.kws_config.thresholds[i] = threshold_obj->valuedouble;
-            MEDIA_LOGD("parse g_config.kws_config.thresholds[%d] %f", i, g_config.kws_config.thresholds[i]);
+            RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "parse g_config.kws_config.thresholds[%d] %f\n", i, g_config.kws_config.thresholds[i]);
         }
     }
 
     cJSON_Delete(root);
     fclose(param_file);
-    MEDIA_LOGD("parse finish");
+    RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "parse finish\n");
 }
 
 SpeechConfig *SpeechConfig_getSpeechConfig(void)
@@ -225,15 +225,15 @@ float SpeechConfig_getAmplifierVolume(void)
 
 void speech_mind_config_handler(uint16_t argc, uint8_t *argv[])
 {
-    MEDIA_LOGD("-------cmd param--------");
+    RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "-------cmd param--------\n");
     (void) argc;
     while (*argv) {
         if (strcmp((const char *)*argv, "-k") == 0) {
-            MEDIA_LOGD("-------key words param--------");
+            RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "-------key words param--------\n");
             argv++;
             if (*argv) {
                 g_config.kws_config.key_words_num = atoi((const char *)*argv);
-                MEDIA_LOGD("key words num %d", g_config.kws_config.key_words_num);
+                RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "key words num %d\n", g_config.kws_config.key_words_num);
             }
             int total_key_words_length = 0;
             for (int i = 0; i < g_config.kws_config.key_words_num; i++) {
@@ -242,7 +242,7 @@ void speech_mind_config_handler(uint16_t argc, uint8_t *argv[])
                     total_key_words_length += (strlen((const char *)*argv) + 1);
                 }
             }
-            MEDIA_LOGD("total key words length %d", total_key_words_length);
+            RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "total key words length %d\n", total_key_words_length);
             for (int i = 0; i < g_config.kws_config.key_words_num; i++) {
                 argv--;
             }
@@ -260,18 +260,18 @@ void speech_mind_config_handler(uint16_t argc, uint8_t *argv[])
                 g_config.kws_config.key_words_length[i] = (strlen((const char *)*argv) + 1);
                 memcpy(temp, *argv, strlen((const char *)*argv) + 1);
                 temp += strlen((const char *)*argv) + 1;
-                MEDIA_LOGD("[%d] key words is %s", i, *argv);
+                RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "[%d] key words is %s\n", i, *argv);
             }
         }
         if (strcmp((const char *)*argv, "-t") == 0) {
-            MEDIA_LOGD("-------thresholds param--------");
+            RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "-------thresholds param--------\n");
             argv++;
             if (*argv) {
                 g_config.kws_config.thresholds_num = atoi((const char *)*argv);
-                MEDIA_LOGD("thresholds num %d", g_config.kws_config.thresholds_num);
+                RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "thresholds num %d\n", g_config.kws_config.thresholds_num);
                 if (g_config.kws_config.thresholds_num != g_config.kws_config.key_words_num) {
-                    MEDIA_LOGE("thresholds num err");
-                    MEDIA_LOGE("thresholds num is %d, but key words num is %d", g_config.kws_config.thresholds_num, g_config.kws_config.key_words_num);
+                    RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "thresholds num err\n");
+                    RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "thresholds num is %d, but key words num is %d\n", g_config.kws_config.thresholds_num, g_config.kws_config.key_words_num);
                     if (g_config.kws_config.key_words_total) {
                         osal_free(g_config.kws_config.key_words_total);
                     }
@@ -286,7 +286,7 @@ void speech_mind_config_handler(uint16_t argc, uint8_t *argv[])
                 for (int i = 0; i < g_config.kws_config.thresholds_num; i++) {
                     argv++;
                     g_config.kws_config.thresholds[i] = atof((const char *)*argv);
-                    MEDIA_LOGD("g_config.kws_config.thresholds[%d] is %f", i, g_config.kws_config.thresholds[i]);
+                    RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "g_config.kws_config.thresholds[%d] is %f\n", i, g_config.kws_config.thresholds[i]);
                 }
             }
         }
@@ -310,7 +310,7 @@ void speech_mind_config_handler(uint16_t argc, uint8_t *argv[])
  */
 u32 speech_mind_config_test(u16 argc, u8 *argv[])
 {
-    MEDIA_LOGV("%s Enter\n", __FUNCTION__);
+    RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "%s Enter\n", __FUNCTION__);
     speech_mind_config_handler(argc, argv);
     SpeechConfig_save();
 

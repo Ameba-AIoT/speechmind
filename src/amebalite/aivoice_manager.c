@@ -71,7 +71,7 @@ static HRESULT *AiVoiceManager_onState(VOICE_RPC_ERROR_STATE *pParam, RPC_STRUCT
     *pRes = 0;
     if (pParam->type == 0) {
         g_dsp_inited = true;
-        MEDIA_LOGD("OnState Dsp Inited");
+        RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "OnState Dsp Inited");
     }
 
     if (pParam->type == 1) {
@@ -125,13 +125,13 @@ AiVoiceManager *AiVoiceManager_create(AIVoiceFlowType type, struct aivoice_confi
 
     AiVoiceManager *manager = osal_malloc(sizeof(AiVoiceManager));
     if (!manager) {
-        MEDIA_LOGE("malloc aivoice manager fail\n");
+        RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "malloc aivoice manager fail\n");
         return NULL;
     }
 
     manager->mic_ring_buffer = ring_buffer_create(1 << 15, RINGBUFFER_IPC);
     if (!manager->mic_ring_buffer) {
-        MEDIA_LOGE("create mic local ring buffer fail");
+        RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "create mic local ring buffer fail");
         osal_free(manager);
         return NULL;
     }
@@ -192,7 +192,7 @@ AiVoiceManager *AiVoiceManager_create(AIVoiceFlowType type, struct aivoice_confi
     Parcel_WriteInt32(parcel, config->common->timeout);
     Parcel_WriteInt32(parcel, config->common->memory_alloc_mode);
 
-    MEDIA_LOGD("before parcel size %d\n", Parcel_IpcDataSize(parcel));
+    RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "before parcel size %d\n", Parcel_IpcDataSize(parcel));
 
     bool tmp_one = 1;
     int16_t tmp_two = 2;
@@ -218,13 +218,13 @@ AiVoiceManager *AiVoiceManager_create(AIVoiceFlowType type, struct aivoice_confi
         Parcel_WriteBool(parcel, tmp_one);
     }
 
-    MEDIA_LOGD("after parcel size %d\n", Parcel_IpcDataSize(parcel));
+    RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "after parcel size %d\n", Parcel_IpcDataSize(parcel));
 
     arg.config_addr = (uint32_t)Parcel_IpcData(parcel);
     arg.config_length = Parcel_IpcDataSize(parcel);
 
     uint8_t* tmp_data = (uint8_t*)arg.config_addr;
-    MEDIA_LOGD("%02x %02x %02x %02x %02x %02x",
+    RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "%02x %02x %02x %02x %02x %02x",
                tmp_data[0], tmp_data[1], tmp_data[2], tmp_data[3], tmp_data[4], tmp_data[5]);
     DCache_Clean((uint32_t)arg.config_addr, arg.config_length);
 
@@ -236,7 +236,7 @@ AiVoiceManager *AiVoiceManager_create(AIVoiceFlowType type, struct aivoice_confi
     HRESULT *res = VOICE_RPC_ToAgent_Create_0(&arg, &clnt);
     (void) res;
 
-    MEDIA_LOGD("Agent_Init End");
+    RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "Agent_Init End");
 
     clnt = RPC_PrepareCLNT(VOICE_RPC_MODE, VOICE_SYSTEM, 0);
     long rpc_param = 1;
@@ -249,7 +249,7 @@ AiVoiceManager *AiVoiceManager_create(AIVoiceFlowType type, struct aivoice_confi
 int32_t AiVoiceManager_feed(AiVoiceManager *manager, const void* data, int len)
 {
     if (!manager) {
-        MEDIA_LOGE("manager is NULL");
+        RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "manager is NULL");
         return AUDIO_ERR_INVALID_PARAM;
     }
 

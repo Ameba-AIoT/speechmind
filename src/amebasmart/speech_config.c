@@ -32,7 +32,7 @@ void SpeechConfig_save()
 {
     FILE *param_file = fopen(PARAM_FILE, "r+");
     if (!param_file) {
-        MEDIA_LOGE("%s is not exist.", PARAM_FILE);
+        RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "%s is not exist.\n", PARAM_FILE);
         return;
     }
 
@@ -41,7 +41,7 @@ void SpeechConfig_save()
 
     cJSON *root = cJSON_Parse(tmp);
     if (!root) {
-        MEDIA_LOGE("parse error.");
+        RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "parse error.\n");
         fclose(param_file);
         return;
     }
@@ -50,7 +50,7 @@ void SpeechConfig_save()
         cJSON_DeleteItemFromObject(root, "index");
         cJSON_AddItemToObject(root, "index", cJSON_CreateNumber(g_config.dump_config.index));
     } else {
-        MEDIA_LOGE("parse index fail");
+        RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "parse index fail\n");
     }
 
     char *updated_json = cJSON_Print(root);
@@ -60,13 +60,13 @@ void SpeechConfig_save()
 
     param_file = fopen(PARAM_FILE, "w");
     if (!param_file) {
-        MEDIA_LOGE("%s is not exist.", PARAM_FILE);
+        RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "%s is not exist.\n", PARAM_FILE);
         free(updated_json);
         return;
     }
     res = fwrite(updated_json, strlen(updated_json) + 1, 1, param_file);
     if (res < strlen(updated_json) + 1) {
-        MEDIA_LOGE("write fail");
+        RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "write fail\n");
     }
     fclose(param_file);
     free(updated_json);
@@ -77,7 +77,7 @@ void SpeechConfig_load()
     SetDefaultParam();
     FILE *param_file = fopen(PARAM_FILE, "r");
     if (!param_file) {
-        MEDIA_LOGE("%s is not exist.", PARAM_FILE);
+        RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "%s is not exist.\n", PARAM_FILE);
         g_config.dump_config.sd_dump = 0;
         return;
     }
@@ -90,48 +90,48 @@ void SpeechConfig_load()
 
     cJSON *root = cJSON_Parse(tmp);
     if (!root) {
-        MEDIA_LOGE("parse root error.");
+        RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "parse root error.\n");
         fclose(param_file);
         return;
     }
 
     cJSON *amplifier_volume = cJSON_GetObjectItem(root, "amplifier_volume");
     if (!amplifier_volume) {
-        MEDIA_LOGE("parse volume fail.");
+        RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "parse volume fail.\n");
         g_config.amplifier_volume = 0.8f;
     } else {
         g_config.amplifier_volume = (float)amplifier_volume->valuedouble;
-        MEDIA_LOGD("amplifier_volume is %d.", (int)(g_config.amplifier_volume * 10));
+        RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "amplifier_volume is %d.\n", (int)(g_config.amplifier_volume * 10));
     }
 
     cJSON *sd_dump = cJSON_GetObjectItem(root, "sd_dump");
     if (!sd_dump) {
-        MEDIA_LOGE("parse sd_dump fail.");
+        RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "parse sd_dump fail.\n");
         goto exit;
     } else {
         g_config.dump_config.sd_dump = sd_dump->valueint;
         if (g_config.dump_config.sd_dump == 0) {
-            MEDIA_LOGD("don't dump data to sd card.");
+            RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "don't dump data to sd card.\n");
             goto exit;
         }
     }
 
     cJSON *index = cJSON_GetObjectItem(root, "index");
     if (!index) {
-        MEDIA_LOGE("parse index fail.");
+        RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "parse index fail.\n");
         goto exit;
     } else {
         g_config.dump_config.index = index->valueint;
-        MEDIA_LOGD("dump file index is %d.", index->valueint);
+        RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "dump file index is %d.\n", index->valueint);
     }
 
     cJSON *save_times = cJSON_GetObjectItem(root, "save_times");
     if (!save_times) {
-        MEDIA_LOGE("parse save times fail.");
+        RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "parse save times fail.\n");
         goto exit;
     } else {
         g_config.dump_config.save_times = save_times->valueint;
-        MEDIA_LOGD("dump save times is %d.", save_times->valueint);
+        RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "dump save times is %d.\n", save_times->valueint);
     }
 
 exit:

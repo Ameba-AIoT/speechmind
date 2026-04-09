@@ -78,12 +78,12 @@ void PCRecorder_uartSendString(char *pstr, int len)
 #if PR_UART_USE_DMA_TX
     int ret = rtos_sema_take(g_pr_adapter.pr_dma_tx_sema, RTOS_MAX_TIMEOUT);
     if (ret) {
-        MEDIA_LOGE("take sema error");
+        RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "take sema error\n");
     }
 
     ret = serial_send_stream_dma(&g_pr_adapter.pr_sobj, pstr, len);
     if (ret != 0) {
-        MEDIA_LOGE("%s Error(%d)", __FUNCTION__, (int)ret);
+        RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "%s Error(%d)\n", __FUNCTION__, (int)ret);
     }
 #else
     while (len) {
@@ -124,7 +124,7 @@ static void PCRecorder_uartDMATxDone(uint32_t id)
     (void) id;
     int res = rtos_sema_give(g_pr_adapter.pr_dma_tx_sema);
     if (res) {
-        MEDIA_LOGE("give sema error");
+        RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "give sema error\n");
     }
 }
 #endif
@@ -171,13 +171,13 @@ static int PCRecorder_audioRecordQuery(void)
     msg_js = cJSON_Print(msg_obj);
     cJSON_Delete(msg_obj);
 
-    MEDIA_LOGD("[PC RECORDER INFO] %s, %s", __func__, msg_js);
+    RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "[PC RECORDER INFO] %s, %s\n", __func__, msg_js);
     osal_mutex_lock(&g_pr_adapter.pr_tx_mutex);
     PCRecorder_uartSendString(msg_js, strlen(msg_js));
     osal_mutex_unlock(&g_pr_adapter.pr_tx_mutex);
     rtos_mem_free(msg_js);
 
-    MEDIA_LOGD("PCRecorder_audioRecordQuery finish");
+    RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "PCRecorder_audioRecordQuery finish\n");
     return 0;
 }
 
@@ -225,10 +225,10 @@ static int PCRecorder_msgResponseAck(int opt)
     msg_js = cJSON_Print(msg_obj);
     cJSON_Delete(msg_obj);
 
-    MEDIA_LOGD("[PC RECORDER INFO] %s, %s", __func__, msg_js);
+    RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "[PC RECORDER INFO] %s, %s\n", __func__, msg_js);
     osal_mutex_lock(&g_pr_adapter.pr_tx_mutex);
     PCRecorder_uartSendString(msg_js, strlen(msg_js));
-    MEDIA_LOGD("[PC RECORDER INFO] %s, send ack done(%d)", __func__, strlen(msg_js));
+    RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "[PC RECORDER INFO] %s, send ack done(%d)\n", __func__, strlen(msg_js));
     osal_mutex_unlock(&g_pr_adapter.pr_tx_mutex);
 
     rtos_mem_free(msg_js);
@@ -246,12 +246,12 @@ static void PCRecorder_msgProcess(void)
     memcpy(tempbuf, g_pr_adapter.pc_buf, g_pr_adapter.pc_datasize);
     g_pr_adapter.pc_datasize = 0;
 
-    MEDIA_LOGD("[PC RECORDER INFO] %s, msg: %s", __func__, (char *)tempbuf);
+    RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "[PC RECORDER INFO] %s, msg: %s\n", __func__, (char *)tempbuf);
     int type = -1;
 
     if ((root = cJSON_Parse((char *)tempbuf)) != NULL) {
         if ((typeobj = cJSON_GetObjectItem(root, "type")) != NULL) {
-            MEDIA_LOGD("[PC RECORDER INFO] type: %s", (char *)typeobj->valuestring);
+            RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "[PC RECORDER INFO] type: %s\n", (char *)typeobj->valuestring);
             for (unsigned int i = 0; i < sizeof(msg_type) / sizeof(PCRecorderMsg); i++) {
                 if (!strcmp(typeobj->valuestring, msg_type[i].item_str)) {
                     type = msg_type[i].item;
@@ -284,7 +284,7 @@ static void PCRecorder_msgProcess(void)
     }
     break;
     default:
-        MEDIA_LOGE("[PC RECORDER INFO] %s, unsupport type =%d", __func__, type);
+        RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "[PC RECORDER INFO] %s, unsupport type =%d\n", __func__, type);
         PCRecorder_msgResponseAck(opt);
     }
 
@@ -293,7 +293,7 @@ static void PCRecorder_msgProcess(void)
 
 static bool PCRecorder_PCRxTask(void *param)
 {
-    MEDIA_LOGI("PCRxTask");
+    RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "PCRxTask\n");
     (void)param;
 
     cJSON_Hooks memoryHook;
@@ -304,11 +304,11 @@ static bool PCRecorder_PCRxTask(void *param)
     memset(g_pr_adapter.pc_buf, 0, PC_BUFLEN);
 
     while (g_pr_adapter.pc_rx_task_running) {
-        MEDIA_LOGI("wait uart");
+        RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "wait uart\n");
         osal_mutex_lock(&g_pr_adapter.pr_rx_con_mutex);
         osal_cond_wait(&g_pr_adapter.pr_rx_con, &g_pr_adapter.pr_rx_con_mutex);
         osal_mutex_unlock(&g_pr_adapter.pr_rx_con_mutex);
-        MEDIA_LOGI("wait uart finish");
+        RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "wait uart finish\n");
         PCRecorder_msgProcess();
     }
 
@@ -317,7 +317,7 @@ static bool PCRecorder_PCRxTask(void *param)
 
 void PCRecorder_init()
 {
-    MEDIA_LOGI("PCRecorder_init");
+    RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "PCRecorder_init\n");
     sys_jtag_off();
 #if PR_UART_USE_DMA_TX
     rtos_sema_create(&g_pr_adapter.pr_dma_tx_sema, 1, RTOS_SEMA_MAX_COUNT);
@@ -343,7 +343,7 @@ void PCRecorder_init()
     param.name = (char *)"PCRxTask";
     int res = osal_thread_create(&g_pr_adapter.pc_rx_task, PCRecorder_PCRxTask, NULL, &param);
     if (res) {
-        MEDIA_LOGE("create dump task fail");
+        RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "create dump task fail\n");
         return;
     }
 }

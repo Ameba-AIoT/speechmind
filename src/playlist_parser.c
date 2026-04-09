@@ -62,7 +62,7 @@ typedef struct PlayListParser {
 
 void PlayListParser_wakeUp(PlayListParser *playlist_parser, InterruptType type)
 {
-    MEDIA_LOGD("send wake up");
+    RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "send wake up\n");
     AMessage *msg = AMessage_create(kWhatWakeUp, &playlist_parser->handler);
     AMessage_setInt32(msg, "type", type);
     AMessage_post(msg, 0);
@@ -71,7 +71,7 @@ void PlayListParser_wakeUp(PlayListParser *playlist_parser, InterruptType type)
 
 void PlayListParser_onWakeUp(PlayListParser *playlist_parser, AMessage *msg)
 {
-    MEDIA_LOGD("on wake up");
+    RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "on wake up\n");
     int32_t type = 0;
     AMessage_findInt32(msg, "type", &type);
     if (type == PLAYLIST_PAUSE) {
@@ -88,7 +88,7 @@ void PlayListParser_onWakeUp(PlayListParser *playlist_parser, AMessage *msg)
 
 void PlayListParser_sslMsg(PlayListParser *playlist_parser, void *data, int32_t length)
 {
-    MEDIA_LOGD("send ssl msg");
+    RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "send ssl msg\n");
     AMessage *msg = AMessage_create(kWhatSslMsg, &playlist_parser->handler);
     void *temp_data = (void *)osal_malloc(length);
     memcpy(temp_data, data, length);
@@ -100,7 +100,7 @@ void PlayListParser_sslMsg(PlayListParser *playlist_parser, void *data, int32_t 
 
 void PlayListParser_onSslMsg(PlayListParser *playlist_parser, AMessage *msg)
 {
-    MEDIA_LOGD("on ssl msg");
+    RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "on ssl msg\n");
 
     char tts_url[1024] = {0};
     void *data;
@@ -118,7 +118,7 @@ void PlayListParser_onSslMsg(PlayListParser *playlist_parser, AMessage *msg)
         if (ssl_angle_obj) {
             float angle = ssl_angle_obj->valuedouble;
             if (angle >= 0) {
-                MEDIA_LOGI("voice angle %.1f", angle);
+                RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "voice angle %.1f\n", angle);
                 int iangle = (int) angle;
                 if (iangle % 5 != 0) {
                     iangle = iangle / 5 * 5;
@@ -152,7 +152,7 @@ static void PlayListParser_asrIntent(const char *json, int bytes, char **sub_tts
 {
     (void)bytes;
 
-    MEDIA_LOGV("==>rec: %.*s", bytes, json);
+    RTK_LOGS(LOG_TAG, RTK_LOG_DEBUG, "==>rec: %.*s\n", bytes, json);
     char g_tts_content[MAX_TTS_CONTENT_LEN] = { 0 };
 
     cJSON *res_obj = cJSON_Parse((char *)json);
@@ -280,7 +280,7 @@ PlayListParser_onMessage(AHandler *me, AMessage *msg)
     PlayListParser *playlist_parser = container_of(me, PlayListParser, handler);
     switch (AMessage_what(msg)) {
     case kWhatWakeUp: {
-        MEDIA_LOGD("kWhatWakeUp");
+        RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "kWhatWakeUp\n");
         PlayListParser_onWakeUp(playlist_parser, msg);
         break;
     }
@@ -301,7 +301,7 @@ PlayListParser_onMessage(AHandler *me, AMessage *msg)
         break;
     }
     case kWhatTTSCallback: {
-        MEDIA_LOGD("kWhatTTSCallback");
+        RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "kWhatTTSCallback\n");
         int32_t what;
         void *url;
         AMessage_findInt32(msg, "what", &what);
@@ -310,17 +310,17 @@ PlayListParser_onMessage(AHandler *me, AMessage *msg)
         switch (what) {
         case KWhatListEmpty: {
             if (url) {
-                MEDIA_LOGD("url %s", url);
+                RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "url %s\n", url);
                 if (playlist_parser->music_status == MUSIC_PAUSE) {
-                    MEDIA_LOGD("music resume");
+                    RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "music resume\n");
                     MusicPlayer_resume(playlist_parser->music_player);
                     playlist_parser->music_status = MUSIC_PLAY;
                 } else {
-                    MEDIA_LOGD("music is not pause");
+                    RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "music is not pause\n");
                     playlist_parser->music_status = MUSIC_IDLE;
                 }
             } else {
-                MEDIA_LOGE("could not find url");
+                RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "could not find url\n");
             }
             break;
         }
@@ -336,7 +336,7 @@ PlayListParser *PlayListParser_create(void)
 {
     PlayListParser *playlist_parser = (PlayListParser *)osal_malloc(sizeof(PlayListParser));
     if (!playlist_parser) {
-        MEDIA_LOGE("malloc playlist parser fail");
+        RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "malloc playlist parser fail\n");
         return NULL;
     }
 
@@ -344,7 +344,7 @@ PlayListParser *PlayListParser_create(void)
 
     playlist_parser->looper = ALooper_create("plp");
     if (!playlist_parser->looper) {
-        MEDIA_LOGE("creat alooper fail");
+        RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "creat alooper fail\n");
         osal_free(playlist_parser);
         return NULL;
     }

@@ -11,13 +11,13 @@
 void OnVad(SpeechMindCallback *callback, VadInfo *info)
 {
     (void)callback;
-    MEDIA_LOGD("vad info status %ld offset_ms %ld", info->status, info->offset_ms);
+    RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "vad info status %ld offset_ms %ld\n", info->status, info->offset_ms);
 }
 
 void OnWakeUp(SpeechMindCallback *callback, WakeUpInfo *info)
 {
     (void)callback;
-    MEDIA_LOGD("wake up info len %ld words %s", info->len, info->wakeup_words);
+    RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "wake up info len %ld words %s\n", info->len, info->wakeup_words);
 }
 
 void OnAfe(SpeechMindCallback *callback, AfeInfo *info)
@@ -29,13 +29,13 @@ void OnAfe(SpeechMindCallback *callback, AfeInfo *info)
 void OnAsr(SpeechMindCallback *callback, AsrInfo *info)
 {
     (void)callback;
-    MEDIA_LOGD("asr info id %ld", info->id);
+    RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "asr info id %ld\n", info->id);
 }
 
 void OnAsrRecTimeout(SpeechMindCallback *callback)
 {
     (void)callback;
-    MEDIA_LOGD("asr timeout");
+    RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "asr timeout\n");
 }
 
 void app_example(void)
@@ -46,7 +46,7 @@ void app_example(void)
 
     struct SpeechMindCallback* callback = (struct SpeechMindCallback*)osal_malloc(sizeof(struct SpeechMindCallback));
     if (!callback) {
-        MEDIA_LOGE("malloc speechmind callback fail, no memory!");
+        RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "malloc speechmind callback fail, no memory!\n");
         SpeechMind_deinit();
         return;
     }

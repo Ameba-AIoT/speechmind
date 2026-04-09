@@ -63,9 +63,9 @@ void SpeechMind_managerCallback(enum aivoice_out_event_type event_type,
     switch (event_type) {
     case AIVOICE_EVOUT_VAD:
         vad_out = (struct aivoice_evout_vad *)msg;
-        MEDIA_LOGD("[user] vad. status = %d, offset = %d", vad_out->status, vad_out->offset_ms);
+        RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "[user] vad. status = %d, offset = %d\n", vad_out->status, vad_out->offset_ms);
         if (!vad_out->status && vad_out->offset_ms >= VAD_TIMEOUT_MS) {
-            MEDIA_LOGD("[user] vad timeout, reset");
+            RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "[user] vad timeout, reset\n");
             vad_feed = false;
         }
 
@@ -79,7 +79,7 @@ void SpeechMind_managerCallback(enum aivoice_out_event_type event_type,
         break;
 
     case AIVOICE_EVOUT_WAKEUP:
-        MEDIA_LOGD("wake up");
+        RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "wake up\n");
         vad_feed = true;
         wakeup_triggered = true;
 
@@ -105,7 +105,7 @@ void SpeechMind_managerCallback(enum aivoice_out_event_type event_type,
         // in this example, we only print it once to make log clear
         if (wakeup_triggered) {
             wakeup_triggered = false;
-            MEDIA_LOGD("[user] afe output %d channels raw audio, others: %s",
+            RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "[user] afe output %d channels raw audio, others: %s\n",
                        afe_out->ch_num, afe_out->out_others_json?afe_out->out_others_json:"null");
 #if ENABLE_SSL_DOA
             PlayListParser_sslMsg(speech_mind->parser, (void*)afe_out->out_others_json, strlen(afe_out->out_others_json));
@@ -160,13 +160,13 @@ int32_t SpeechMind_init(void)
 
     g_speech_mind = (SpeechMind *)osal_calloc(sizeof(SpeechMind));
     if (!g_speech_mind) {
-        MEDIA_LOGE("Create SpeechMind failed");
+        RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "Create SpeechMind failed\n");
         return NULL;
     }
 
     g_speech_mind->parser = PlayListParser_create();
     if (!g_speech_mind->parser) {
-        MEDIA_LOGE("Create playlist parser fail");
+        RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "Create playlist parser fail\n");
         osal_free(g_speech_mind);
         g_speech_mind = NULL;
         return NULL;
@@ -178,7 +178,7 @@ int32_t SpeechMind_init(void)
         PlayListParser_destroy(g_speech_mind->parser);
         osal_free(g_speech_mind);
         g_speech_mind = NULL;
-        MEDIA_LOGE("AudioDump_create failed");
+        RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "AudioDump_create failed\n");
         return false;
     }
 #elif defined(PC_RECORD)
@@ -187,7 +187,7 @@ int32_t SpeechMind_init(void)
         PlayListParser_destroy(g_speech_mind->parser);
         osal_free(g_speech_mind);
         g_speech_mind = NULL;
-        MEDIA_LOGE("AudioDump_create failed");
+        RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "AudioDump_create failed\n");
         return false;
     }
 #else
@@ -213,14 +213,14 @@ __attribute__((weak)) afe_ns_mode_e AFE_NS_SIGNAL_SET(void) {
 
 static bool SpeechMind_speechTask(void *param)
 {
-    MEDIA_LOGI("%s Enter\n", __FUNCTION__);
+    RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "%s Enter\n", __FUNCTION__);
     (void)param;
     osal_msleep(1000);
     memset(g_speech_mind->dump_data, 0, DUMP_FRAME_BYTES);
 
     g_speech_mind->audio_capture = AudioCapture_create(SAMPLE_RATE, IN_CHANNEL);
     if (!g_speech_mind->audio_capture) {
-        MEDIA_LOGE("set AiVoiceManagerCallback failed");
+        RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "set AiVoiceManagerCallback failed\n");
         return false;
     }
 
@@ -253,7 +253,7 @@ static bool SpeechMind_speechTask(void *param)
 
     g_speech_mind->manager = AiVoiceManager_create(type, &config);
     if (!g_speech_mind->manager) {
-        MEDIA_LOGE("%s fail, create aivoice manager fail!\n", __FUNCTION__);
+        RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "%s fail, create aivoice manager fail!\n", __FUNCTION__);
         AudioCapture_destroy(g_speech_mind->audio_capture);
         return false;
     }
@@ -264,7 +264,7 @@ static bool SpeechMind_speechTask(void *param)
     if (res) {
         AudioCapture_destroy(g_speech_mind->audio_capture);
         AiVoiceManager_destroy(g_speech_mind->manager);
-        MEDIA_LOGE("set AiVoiceManagerCallback failed");
+        RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "set AiVoiceManagerCallback failed\n");
         return false;
     }
 
@@ -281,9 +281,9 @@ static bool SpeechMind_speechTask(void *param)
 
 int32_t SpeechMind_start(void)
 {
-    MEDIA_LOGD("%s Enter\n", __FUNCTION__);
+    RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "%s Enter\n", __FUNCTION__);
     if (!g_speech_mind) {
-        MEDIA_LOGE("%s fail, speech mind not init!\n", __FUNCTION__);
+        RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "%s fail, speech mind not init!\n", __FUNCTION__);
         return AUDIO_ERR_INVALID_OPERATION;
     }
 
@@ -295,7 +295,7 @@ int32_t SpeechMind_start(void)
     param.name = (char *)"SpeechTask";
     int32_t res = osal_thread_create(&g_speech_mind->speech_thread, SpeechMind_speechTask, NULL, &param);
     if (res) {
-        MEDIA_LOGE("create SpeechTask fail");
+        RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "create SpeechTask fail\n");
         return AUDIO_ERR_NO_MEMORY;
     }
 
@@ -304,9 +304,9 @@ int32_t SpeechMind_start(void)
 
 int32_t SpeechMind_stop(void)
 {
-    MEDIA_LOGV("%s Enter\n", __FUNCTION__);
+    RTK_LOGS(LOG_TAG, RTK_LOG_DEBUG, "%s Enter\n", __FUNCTION__);
     if (!g_speech_mind) {
-        MEDIA_LOGE("%s fail, speech mind not init!\n", __FUNCTION__);
+        RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "%s fail, speech mind not init!\n", __FUNCTION__);
         return AUDIO_ERR_INVALID_OPERATION;
     }
 
@@ -326,9 +326,9 @@ int32_t SpeechMind_stop(void)
 
 int32_t SpeechMind_setCallback(SpeechMindCallback *callback)
 {
-    MEDIA_LOGV("%s Enter\n", __FUNCTION__);
+    RTK_LOGS(LOG_TAG, RTK_LOG_DEBUG, "%s Enter\n", __FUNCTION__);
     if (!g_speech_mind) {
-        MEDIA_LOGE("%s fail, speech mind not init!\n", __FUNCTION__);
+        RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "%s fail, speech mind not init!\n", __FUNCTION__);
         return AUDIO_ERR_INVALID_OPERATION;
     }
 

@@ -41,7 +41,7 @@ AiVoiceManager *AiVoiceManager_create(AIVoiceFlowType type, struct aivoice_confi
 {
     AiVoiceManager *manager = osal_malloc(sizeof(AiVoiceManager));
     if (!manager) {
-        MEDIA_LOGE("malloc aivoice manager fail\n");
+        RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "malloc aivoice manager fail\n");
         return NULL;
     }
 
@@ -97,7 +97,7 @@ AiVoiceManager *AiVoiceManager_create(AIVoiceFlowType type, struct aivoice_confi
 int32_t AiVoiceManager_feed(AiVoiceManager *manager, const void* data, int len)
 {
     if (!manager) {
-        MEDIA_LOGE("manager is NULL");
+        RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "manager is NULL\n");
         return 0;
     }
 

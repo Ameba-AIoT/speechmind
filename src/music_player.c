@@ -50,7 +50,7 @@ int32_t MusicPlayer_start(MusicPlayer* player, const char* url);
 
 static void MusicPlayer_setStatus(MusicPlayer* player, int32_t status) {
     osal_mutex_lock(&player->status_mutex);
-    MEDIA_LOGD("old status %d, new status %d", player->status, status);
+    RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "old status %d, new status %d\n", player->status, status);
     if ((player->status == MEDIA_PLAYER_STARTED) && (status == MEDIA_PLAYER_STOPPED || status == MEDIA_PLAYER_PLAYBACK_COMPLETE)) {
         if (status == MEDIA_PLAYER_PLAYBACK_COMPLETE) {
             Playlist_removeFirstSong(player->playlist);
@@ -64,9 +64,9 @@ static void MusicPlayer_setStatus(MusicPlayer* player, int32_t status) {
                 player->status = status;
                 MusicPlayer_start(player, url);
             } else {
-                MEDIA_LOGD("player is idle");
+                RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "player is idle\n");
                 if (player->notify && player->url) {
-                    MEDIA_LOGD("notify");
+                    RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "notify\n");
                     AMessage *msg = AMessage_duplicate(player->notify);
                     AMessage_setInt32(msg, "what", KWhatListEmpty);
                     AMessage_setPointer(msg, "url", player->url);
@@ -110,17 +110,17 @@ void MusicPlayer_onStart(MusicPlayer* music_player, AMessage* msg) {
 
     int32_t ret = MediaPlayer_SetSource(music_player->player, url);
     if (ret != 0) {
-        MEDIA_LOGE("MediaPlayer_SetSource FAILED ret=%d", (int)ret);
+        RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "MediaPlayer_SetSource FAILED ret=%d\n", (int)ret);
     } else {
         ret = MediaPlayer_Prepare(music_player->player);
         if (ret) {
-            MEDIA_LOGE("MediaPlayer_Prepare FAILED ret=%d", (int)ret);
+            RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "MediaPlayer_Prepare FAILED ret=%d\n", (int)ret);
             ret = MediaPlayer_Reset(music_player->player);
         } else {
             ret = MediaPlayer_Start(music_player->player);
-            MEDIA_LOGD("MediaPlayer_Start ret=%d", (int)ret);
+            RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "MediaPlayer_Start ret=%d\n", (int)ret);
             if (ret) {
-                MEDIA_LOGE("MediaPlayer_Start FAILED ret=%d", (int)ret);
+                RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "MediaPlayer_Start FAILED ret=%d\n", (int)ret);
                 ret = MediaPlayer_Reset(music_player->player);
             }
         }
@@ -146,7 +146,7 @@ void MusicPlayer_onStop(MusicPlayer* music_player)
 }
 
 int32_t MusicPlayer_resume(MusicPlayer* music_player) {
-    MEDIA_LOGE("MusicPlayer_resume");
+    RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "MusicPlayer_resume\n");
     AMessage *msg = AMessage_create(kWhatResume, &music_player->handler);
     AMessage_post(msg, 0);
     AMessage_put(msg);
@@ -155,7 +155,7 @@ int32_t MusicPlayer_resume(MusicPlayer* music_player) {
 
 void MusicPlayer_onResume(MusicPlayer* music_player) {
     if (MediaPlayer_Start(music_player->player)) {
-        MEDIA_LOGE("MusicPlayer not start, restart");
+        RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "MusicPlayer not start, restart\n");
         char* url = Playlist_getFirstSongTitle(music_player->playlist);
         if(url) {
             MusicPlayer_start(music_player, url);
@@ -219,7 +219,7 @@ static void OnMusicPlayStateChanged(const struct MediaPlayerCallback *listener,
                                     const struct MediaPlayer *player,
                                     int state)
 {
-    MEDIA_LOGD("OnMusicPlayStateChanged(%p %p), (%d)", listener, player, state);
+    RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "OnMusicPlayStateChanged(%p %p), (%d)\n", listener, player, state);
     (void) player;
     MusicPlayer *music_player = GetMusicPlayer(listener);
     AMessage *msg = AMessage_create(kWhatStateChange, &music_player->handler);
@@ -253,7 +253,7 @@ MusicPlayer* MusicPlayer_create(AMessage *notify) {
     (void) notify;
     MusicPlayer* music_player = (MusicPlayer*)osal_malloc(sizeof(MusicPlayer));
     if (!music_player) {
-        MEDIA_LOGE("malloc speech player fail");
+        RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "malloc speech player fail\n");
         return NULL;
     }
 
@@ -265,14 +265,14 @@ MusicPlayer* MusicPlayer_create(AMessage *notify) {
 
     music_player->playlist = Playlist_create();
     if (!music_player->playlist) {
-        MEDIA_LOGE("creat playlist fail");
+        RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "creat playlist fail\n");
         osal_free(music_player);
         return NULL;
     }
 
     music_player->player = MediaPlayer_Create();
     if (!music_player->player) {
-        MEDIA_LOGE("malloc music_player->player fail");
+        RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "malloc music_player->player fail\n");
         Playlist_destroy(music_player->playlist);
         osal_free(music_player);
         return NULL;
@@ -286,7 +286,7 @@ MusicPlayer* MusicPlayer_create(AMessage *notify) {
 
     music_player->looper = ALooper_create("plp");
     if (!music_player->looper) {
-        MEDIA_LOGE("creat alooper fail");
+        RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "creat alooper fail\n");
         Playlist_destroy(music_player->playlist);
         osal_free(music_player->player);
         osal_free(music_player);
@@ -311,17 +311,17 @@ int32_t MusicPlayer_addSong(MusicPlayer* player, const char* url) {
     Playlist_addSong(player->playlist, url);
     int status = MusicPlayer_getStatus(player);
     if (list_size == 0 && status != MEDIA_PLAYER_PAUSED) {
-        MEDIA_LOGD("start %s list size %d", url, list_size);
+        RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "start %s list size %d\n", url, list_size);
         MusicPlayer_start(player, url);
     } else {
-        MEDIA_LOGD("add song start faild list size %d", list_size);
+        RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "add song start faild list size %d\n", list_size);
     }
     return OSAL_OK;
 }
 
 int32_t MusicPlayer_destroy(MusicPlayer* music_player)
 {
-    MEDIA_LOGD("%s Enter", __FUNCTION__);
+    RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "%s Enter\n", __FUNCTION__);
     if (!music_player) {
         return OSAL_ERR_INVALID_PARAM;
     }
