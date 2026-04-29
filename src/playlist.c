@@ -1,5 +1,5 @@
 #define LOG_TAG "PlayList"
-#include "log/log.h"
+#include "log/media_log.h"
 
 #include <stdlib.h>
 #include <stdbool.h>
@@ -40,7 +40,7 @@ typedef struct Playlist {
     osal_cond_t cond;
     bool isPlaying;
     bool shouldExit;
-    osal_thread_t* playlist_task;
+    osal_thread_t playlist_task;
 } Playlist;
 
 Playlist* Playlist_create(void) {

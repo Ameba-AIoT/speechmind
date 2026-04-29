@@ -1,6 +1,6 @@
 #define LOG_TAG "SpeechC"
 
-#include "log/log.h"
+#include "log/media_log.h"
 #include "osal_c/osal_mem.h"
 
 #include <stdlib.h>

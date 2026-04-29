@@ -1,5 +1,5 @@
 #define LOG_TAG "PCRecorder"
-#include "log/log.h"
+#include "log/media_log.h"
 
 #include <string.h>
 #include <stdint.h>
@@ -42,7 +42,7 @@ typedef struct PCRecorderAdapter {
     int tx_cnt;
     uint8_t record_stop;
     uint8_t record_status;
-    osal_thread_t* pc_rx_task;
+    osal_thread_t pc_rx_task;
     bool pc_rx_task_running;
     int start_cnt;
     int end_cnt;
@@ -291,7 +291,7 @@ static void PCRecorder_msgProcess(void)
     cJSON_Delete(root);
 }
 
-static bool PCRecorder_PCRxTask(void *param)
+static void *PCRecorder_PCRxTask(void *param)
 {
     RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "PCRxTask\n");
     (void)param;
@@ -312,7 +312,7 @@ static bool PCRecorder_PCRxTask(void *param)
         PCRecorder_msgProcess();
     }
 
-    return false;
+    return NULL;
 }
 
 void PCRecorder_init()
@@ -361,7 +361,7 @@ void PCRecorder_deInit(void)
 
     if (g_pr_adapter.pc_rx_task) {
         g_pr_adapter.pc_rx_task_running = false;
-        osal_thread_request_exitAndWait(g_pr_adapter.pc_rx_task);
+        osal_thread_join(g_pr_adapter.pc_rx_task, NULL);
     }
 }
 

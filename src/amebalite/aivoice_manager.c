@@ -3,7 +3,7 @@
 #include <string.h>
 #include "ameba_soc.h"
 
-#include "log/log.h"
+#include "log/media_log.h"
 #include "common/audio_errnos.h"
 #include "osal_c/osal_mem.h"
 #include "osal_c/osal_time.h"

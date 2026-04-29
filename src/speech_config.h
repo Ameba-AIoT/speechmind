@@ -3,6 +3,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct KWSConfig KWSConfig;
 struct KWSConfig {
     int key_words_num;
@@ -33,4 +37,9 @@ SpeechConfig *SpeechConfig_getSpeechConfig(void);
 float SpeechConfig_getAmplifierVolume(void);
 
 void SpeechConfig_save(void);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* _SPEECH_MIND_SPEECH_CONFIG_ */

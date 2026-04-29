@@ -1,5 +1,5 @@
 #define LOG_TAG "AudioDump"
-#include "log/log.h"
+#include "log/media_log.h"
 
 #include <stdio.h>
 #include <stdint.h>
@@ -22,12 +22,12 @@
 
 typedef struct AudioDump {
     bool save_thread_running;
-    osal_thread_t* save_thread;
+    osal_thread_t save_thread;
     ring_buffer *save_ring_buffer;
     enum audio_dump_type type;
 } AudioDump;
 
-static bool SDDumpTask(void *param)
+static void *SDDumpTask(void *param)
 {
     RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "SDDumpTask\n");
     AudioDump *handle = (AudioDump *)param;
@@ -73,10 +73,10 @@ static bool SDDumpTask(void *param)
     }
 
     osal_free(tmp_data);
-    return false;
+    return NULL;
 }
 
-static bool PcDumpTask(void *param)
+static void *PcDumpTask(void *param)
 {
     RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "PcDumpTask\n");
     AudioDump *handle = (AudioDump *)param;
@@ -109,7 +109,7 @@ static bool PcDumpTask(void *param)
 
     osal_free(buffer0);
     osal_free(buffer1);
-    return false;
+    return NULL;
 }
 
 AudioDump* AudioDump_create(enum audio_dump_type type) {
@@ -173,7 +173,7 @@ int32_t AudioDump_dump(AudioDump* audio_dump, void* data, int32_t length) {
 int32_t AudioDump_stop(AudioDump* audio_dump) {
     if (audio_dump->save_thread) {
         audio_dump->save_thread_running = false;
-        osal_thread_request_exitAndWait(audio_dump->save_thread);
+        osal_thread_join(audio_dump->save_thread, NULL);
         audio_dump->save_thread = NULL;
     }
     return AUDIO_OK;

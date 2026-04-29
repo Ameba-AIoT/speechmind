@@ -1,6 +1,6 @@
 #define LOG_TAG "SpeechC"
 
-#include "log/log.h"
+#include "log/media_log.h"
 
 #include <stdlib.h>
 #include "cJSON/cJSON.h"

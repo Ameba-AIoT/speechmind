@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "log/log.h"
+#include "log/media_log.h"
 #include "common/audio_errnos.h"
 #include "osal_c/osal_mem.h"
 #include "osal_c/osal_time.h"
@@ -29,7 +29,7 @@ typedef struct SpeechMind {
     SpeechMindCallback *speechmind_cb;
     AiVoiceManagerCallback aivoice_cb;
     bool speech_task_running;
-    osal_thread_t *speech_thread;
+    osal_thread_t speech_thread;
     AudioCapture* audio_capture;
     AudioCaptureCallback capture_cb;
     PlayListParser* parser;
@@ -179,7 +179,7 @@ int32_t SpeechMind_init(void)
         osal_free(g_speech_mind);
         g_speech_mind = NULL;
         RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "AudioDump_create failed\n");
-        return false;
+        return NULL;
     }
 #elif defined(PC_RECORD)
     g_speech_mind->audio_dump = AudioDump_create(AUDIO_DUMP_PC_RECORD);
@@ -188,7 +188,7 @@ int32_t SpeechMind_init(void)
         osal_free(g_speech_mind);
         g_speech_mind = NULL;
         RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "AudioDump_create failed\n");
-        return false;
+        return NULL;
     }
 #else
     g_speech_mind->audio_dump = NULL;
@@ -211,7 +211,7 @@ __attribute__((weak)) afe_ns_mode_e AFE_NS_SIGNAL_SET(void) {
     return AFE_NS_SIGNAL;
 }
 
-static bool SpeechMind_speechTask(void *param)
+static void *SpeechMind_speechTask(void *param)
 {
     RTK_LOGS(LOG_TAG, RTK_LOG_INFO, "%s Enter\n", __FUNCTION__);
     (void)param;
@@ -221,7 +221,7 @@ static bool SpeechMind_speechTask(void *param)
     g_speech_mind->audio_capture = AudioCapture_create(SAMPLE_RATE, IN_CHANNEL);
     if (!g_speech_mind->audio_capture) {
         RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "set AiVoiceManagerCallback failed\n");
-        return false;
+        return NULL;
     }
 
     g_speech_mind->capture_cb = SpeechMind_captureCallback;
@@ -255,7 +255,7 @@ static bool SpeechMind_speechTask(void *param)
     if (!g_speech_mind->manager) {
         RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "%s fail, create aivoice manager fail!\n", __FUNCTION__);
         AudioCapture_destroy(g_speech_mind->audio_capture);
-        return false;
+        return NULL;
     }
 
     g_speech_mind->aivoice_cb = SpeechMind_managerCallback;
@@ -265,7 +265,7 @@ static bool SpeechMind_speechTask(void *param)
         AudioCapture_destroy(g_speech_mind->audio_capture);
         AiVoiceManager_destroy(g_speech_mind->manager);
         RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "set AiVoiceManagerCallback failed\n");
-        return false;
+        return NULL;
     }
 
     AudioCapture_start(g_speech_mind->audio_capture);
@@ -276,7 +276,7 @@ static bool SpeechMind_speechTask(void *param)
         AudioDump_start(g_speech_mind->audio_dump);
     }
 
-    return false;
+    return NULL;
 }
 
 int32_t SpeechMind_start(void)
@@ -312,7 +312,7 @@ int32_t SpeechMind_stop(void)
 
     if (g_speech_mind->speech_thread) {
         g_speech_mind->speech_task_running = false;
-        osal_thread_request_exitAndWait(g_speech_mind->speech_thread);
+        osal_thread_join(g_speech_mind->speech_thread, NULL);
         g_speech_mind->speech_thread = NULL;
     }
 

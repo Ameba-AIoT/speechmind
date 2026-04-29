@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "log/log.h"
+#include "log/media_log.h"
 #include "osal_c/osal_time.h"
 #include "osal_c/osal_mem.h"
 #include "osal_c/osal_thread.h"

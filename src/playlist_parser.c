@@ -1,5 +1,5 @@
 #define LOG_TAG "PlayList"
-#include "log/log.h"
+#include "log/media_log.h"
 
 #include <stdlib.h>
 #include <stdbool.h>

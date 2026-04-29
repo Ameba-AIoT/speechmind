@@ -1,7 +1,7 @@
 #define LOG_TAG "AudioCapture"
 
 #include "platform_autoconf.h"
-#include "log/log.h"
+#include "log/media_log.h"
 
 #include "audio_capture.h"
 
@@ -19,7 +19,7 @@ struct AudioCapture {
     uint32_t sample_rate;
     uint32_t channels;
     bool record_thread_running;
-    osal_thread_t *record_thread;
+    osal_thread_t record_thread;
     AudioCaptureCallback callback;
     void* user_data;
 };
@@ -67,7 +67,7 @@ static void AudioCapture_startRecord(AudioCapture* audio_capture)
     RTK_LOGS(LOG_TAG, RTK_LOG_INFO,"RecordStartTask.. END\n");
 }
 
-static bool AudioCapture_recordLoop(void *param)
+static void *AudioCapture_recordLoop(void *param)
 {
     AudioCapture *audio_capture = (AudioCapture *)param;
     RTK_LOGS(LOG_TAG, RTK_LOG_INFO,"%s Enter, record_thread_running=%d\n", __FUNCTION__, audio_capture->record_thread_running);
@@ -87,7 +87,7 @@ static bool AudioCapture_recordLoop(void *param)
     AudioRecord_Destroy(audio_capture->audio_record);
     audio_capture->audio_record = NULL;
     RTK_LOGS(LOG_TAG, RTK_LOG_INFO,"%s Enter, exit\n", __FUNCTION__);
-    return false;
+    return NULL;
 }
 
 AudioCapture* AudioCapture_create(uint32_t sample_rate, uint32_t channels)
@@ -132,7 +132,7 @@ int32_t AudioCapture_stop(AudioCapture* audio_capture)
 {
     if (audio_capture->record_thread) {
         audio_capture->record_thread_running = false;
-        osal_thread_request_exitAndWait(audio_capture->record_thread);
+        osal_thread_join(audio_capture->record_thread, NULL);
     }
     return AUDIO_OK;
 }
