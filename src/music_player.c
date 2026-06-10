@@ -108,7 +108,7 @@ void MusicPlayer_onStart(MusicPlayer* music_player, AMessage* msg) {
 
     music_player->url = strdup(url);
 
-    int32_t ret = MediaPlayer_SetSource(music_player->player, url);
+    int32_t ret = MediaPlayer_SetDataSource(music_player->player, url);
     if (ret != 0) {
         RTK_LOGS(LOG_TAG, RTK_LOG_ERROR, "MediaPlayer_SetSource FAILED ret=%d\n", (int)ret);
     } else {
@@ -278,9 +278,9 @@ MusicPlayer* MusicPlayer_create(AMessage *notify) {
         return NULL;
     }
 
-    music_player->callback.OnMediaPlayerStateChanged = OnMusicPlayStateChanged;
-    music_player->callback.OnMediaPlayerInfo = OnMusicPlayerInfo;
-    music_player->callback.OnMediaPlayerError = OnMusicError;
+    music_player->callback.OnStateChanged = OnMusicPlayStateChanged;
+    music_player->callback.OnInfo = OnMusicPlayerInfo;
+    music_player->callback.OnError = OnMusicError;
 
     MediaPlayer_SetCallback(music_player->player, &music_player->callback);
 
